@@ -6,7 +6,6 @@
 
 int main() {
 
-    std::cout << "Compile Test" << std::endl;
     std::ifstream inputfile("messages.txt");
 
     if (!inputfile.is_open()) 
@@ -18,24 +17,39 @@ int main() {
     std::cout<< "File opened" << std::endl;
 
     int bytes_to_read = 8;
-    char byte_buffer;
-    std::string eight_byte_data ;
+    char byte_buffer ;
+    std::string byte_data ;
+
+    int prev_index {0};
+    int curr_index;
 
 
     while (!inputfile.eof())
     {
-        for (int i = 0; i < bytes_to_read; i++)
+        int i {0};
+
+        
+        while ( i < bytes_to_read)
         {
             inputfile.get(byte_buffer);
-            eight_byte_data += byte_buffer;
-        }
+            byte_data += byte_buffer;
 
-        std::cout<< "read: " << eight_byte_data << std::endl;
+            if (byte_buffer == '\n')
+            {
+                prev_index = curr_index;
+                curr_index = byte_data.length();
+
+                std::cout << byte_data.substr(prev_index, curr_index - prev_index) << std::endl;
+            }
+            
+            i ++;        
+            
+        }
 
     }
 
+    std::cout<< "read: " << byte_data << " - end of read." << std::endl;  
 
     return 0;
     
-
 }
