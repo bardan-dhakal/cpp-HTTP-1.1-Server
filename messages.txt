@@ -1,10 +1,6 @@
 This file represents simulated data received from a client connection.
 In early development, instead of setting up a live TCP socket, we can read from this file to simulate how the server will process incoming HTTP requests.
-
 Reading from a file in C++ is similar to reading from a network socket because:
-
 Both involve sequential byte streams (characters arrive in order).
-
 Both can produce partial reads (you might not get all the data at once).
-
 Both require buffer management and parsing logic.

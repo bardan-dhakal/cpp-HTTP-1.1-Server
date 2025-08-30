@@ -4,6 +4,48 @@
 #include <string>
 
 
+
+std::string getLines(std::ifstream& inputfile)
+{
+    int bytes_to_read = 8;
+    char byte_buffer ;
+    std::string lines ;
+
+    while (!inputfile.eof())
+    {
+        int i {0};        
+        while ( i < bytes_to_read)
+        {
+            inputfile.get(byte_buffer);
+            lines += byte_buffer;
+            i ++;                
+        }
+    }
+    return lines;
+}
+
+void extract_each_line(const std::string& lines)
+{
+    int prev_index {0};
+    int length = lines.length();
+
+    std::string line {};
+
+    for (int curr_index {0}; curr_index < length; curr_index++)
+    {
+
+        if (lines[curr_index] == '\n' && curr_index != length - 1)
+        {  
+            
+            line = lines.substr(prev_index, curr_index - prev_index + 1);
+            std::cout << "read : " << line;
+
+            prev_index = curr_index + 1;
+        }
+    }
+} 
+
+
 int main() {
 
     std::ifstream inputfile("messages.txt");
@@ -16,39 +58,10 @@ int main() {
 
     std::cout<< "File opened" << std::endl;
 
-    int bytes_to_read = 8;
-    char byte_buffer ;
-    std::string byte_data ;
-
-    int prev_index {0};
-    int curr_index;
+    std::string lines = getLines(inputfile);
 
 
-    while (!inputfile.eof())
-    {
-        int i {0};
-
-        
-        while ( i < bytes_to_read)
-        {
-            inputfile.get(byte_buffer);
-            byte_data += byte_buffer;
-
-            if (byte_buffer == '\n')
-            {
-                prev_index = curr_index;
-                curr_index = byte_data.length();
-
-                std::cout << byte_data.substr(prev_index, curr_index - prev_index) << std::endl;
-            }
-            
-            i ++;        
-            
-        }
-
-    }
-
-    std::cout<< "read: " << byte_data << " - end of read." << std::endl;  
+    extract_each_line(lines);
 
     return 0;
     
