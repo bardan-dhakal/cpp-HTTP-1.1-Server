@@ -15,3 +15,6 @@ CMakeSettings.json
 [Rr]elease/
 x64/
 x86/
+
+#Notes
+HTTP_SERVER_IMPLEMENTATION_GUIDE.txt
