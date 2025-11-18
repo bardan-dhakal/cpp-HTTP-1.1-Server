@@ -9,13 +9,12 @@ set(CMAKE_CXX_STANDARD 17)
 find_package(Threads REQUIRED)
 
 # Create the executable target with your source files
-add_executable(HTTP_Server 
+add_executable(HTTP_Server
     src/main.cpp
     src/server.cpp
     src/request_parser.cpp
-    src/request_builder.cpp
+    src/response_builder.cpp
     src/file_handler.cpp
-    src/connection_handler.cpp
     src/util.cpp
 )
 
