@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <thread>
 #include "server.h"
 #include "request_parser.h"
 #include "response_builder.h"
@@ -8,11 +9,93 @@
 // Global flag for graceful shutdown
 volatile bool server_running = true;
 
+// Forward declaration
+void handleClient(SOCKET client_socket, FileHandler& file_handler);
+
 // Simple signal handler for Ctrl+C
 void signalHandler(int signal)
 {
 	std::cout << "\n[MAIN] Shutting down server..." << std::endl;
 	server_running = false;
+}
+
+// Client handler function - runs in separate thread for each client
+// This function processes one complete request-response cycle
+void handleClient(SOCKET client_socket, FileHandler& file_handler)
+{
+	std::cout << "[HANDLER] Client thread started for socket: " << client_socket << std::endl;
+
+	try
+	{
+		// STEP 1: Read request from socket
+		std::cout << "[HANDLER] Reading request from client..." << std::endl;
+		std::string raw_request = receiveData(client_socket);
+
+		if (raw_request.empty())
+		{
+			std::cout << "[HANDLER] Empty request received" << std::endl;
+			closeSocket(client_socket);
+			std::cout << "[HANDLER] Client thread terminating" << std::endl;
+			return;
+		}
+
+		// STEP 2: Parse the request
+		std::cout << "[HANDLER] Parsing HTTP request..." << std::endl;
+		RequestData request = parseRequest(raw_request);
+
+		ResponseData response;
+
+		// STEP 3: Validate request
+		if (!request.is_valid)
+		{
+			std::cout << "[HANDLER] Invalid request: " << request.error_message << std::endl;
+			response = generateErrorResponse(400, "Bad Request: " + request.error_message);
+		}
+		// STEP 4: Handle the request (currently only GET)
+		else if (request.method == "GET")
+		{
+			std::cout << "[HANDLER] Handling GET request for: " << request.path << std::endl;
+			response = file_handler.handleGetRequest(request.path);
+		}
+		else
+		{
+			std::cout << "[HANDLER] Unsupported method: " << request.method << std::endl;
+			response = generateErrorResponse(405, "Method Not Allowed");
+		}
+
+		// STEP 5: Serialize response
+		std::cout << "[HANDLER] Serializing response (status " << response.status_code << ")..." << std::endl;
+		std::string response_str = serializeResponse(response);
+
+		// STEP 6: Send response to client
+		std::cout << "[HANDLER] Sending response to client..." << std::endl;
+		int bytes_sent = sendData(client_socket, response_str);
+
+		if (bytes_sent > 0)
+		{
+			std::cout << "[HANDLER] Sent " << bytes_sent << " bytes to client" << std::endl;
+		}
+		else
+		{
+			std::cout << "[HANDLER] Failed to send response" << std::endl;
+		}
+
+		// STEP 7: Close connection
+		std::cout << "[HANDLER] Closing client connection..." << std::endl;
+		closeSocket(client_socket);
+
+		std::cout << "[HANDLER] Client thread terminating" << std::endl;
+	}
+	catch (const std::exception& e)
+	{
+		std::cout << "[HANDLER] Exception in client handler: " << e.what() << std::endl;
+		closeSocket(client_socket);
+	}
+	catch (...)
+	{
+		std::cout << "[HANDLER] Unknown exception in client handler" << std::endl;
+		closeSocket(client_socket);
+	}
 }
 
 int main(int argc, char* argv[])
@@ -27,7 +110,7 @@ int main(int argc, char* argv[])
 		webroot = argv[2];
 
 	std::cout << "=====================================" << std::endl;
-	std::cout << "   HTTP/1.1 Server" << std::endl;
+	std::cout << "   HTTP/1.1 Server (Multi-threaded)" << std::endl;
 	std::cout << "=====================================" << std::endl;
 	std::cout << "[MAIN] Port: " << port << std::endl;
 	std::cout << "[MAIN] Webroot: " << webroot << std::endl;
@@ -58,7 +141,8 @@ int main(int argc, char* argv[])
 	std::cout << "[INFO] Press Ctrl+C to shut down" << std::endl;
 	std::cout << "=====================================" << std::endl << std::endl;
 
-	// STEP 4: Main server loop - Accept clients and handle requests
+	// STEP 4: Main server loop - Accept clients and create threads
+	int client_count = 0;
 	while (server_running)
 	{
 		// STEP 4a: Accept incoming client connection
@@ -71,68 +155,27 @@ int main(int argc, char* argv[])
 			continue;
 		}
 
-		// STEP 4b: Read request from socket
-		std::cout << "[MAIN] Reading request from client..." << std::endl;
-		std::string raw_request = receiveData(client_socket);
+		client_count++;
+		std::cout << "[MAIN] Client #" << client_count << " connected" << std::endl;
 
-		if (raw_request.empty())
+		// STEP 4b: Create new thread for this client
+		// The thread runs handleClient() independently
+		// Main loop immediately returns to accept() waiting for next client
+		try
 		{
-			std::cout << "[WARN] Empty request received" << std::endl;
+			std::thread client_thread(handleClient, client_socket, std::ref(file_handler));
+			client_thread.detach();  // Let thread run independently, no need to join
+			std::cout << "[MAIN] Created thread for client #" << client_count << std::endl;
+		}
+		catch (const std::exception& e)
+		{
+			std::cout << "[ERROR] Failed to create thread: " << e.what() << std::endl;
 			closeSocket(client_socket);
-			continue;
 		}
-
-		// STEP 4c: Parse the request
-		std::cout << "[MAIN] Parsing HTTP request..." << std::endl;
-		RequestData request = parseRequest(raw_request);
-
-		ResponseData response;
-
-		// STEP 4d: Validate request
-		if (!request.is_valid)
-		{
-			std::cout << "[ERROR] Invalid request: " << request.error_message << std::endl;
-			response = generateErrorResponse(400, "Bad Request: " + request.error_message);
-		}
-		// STEP 4e: Handle the request (currently only GET)
-		else if (request.method == "GET")
-		{
-			std::cout << "[MAIN] Handling GET request for: " << request.path << std::endl;
-			response = file_handler.handleGetRequest(request.path);
-		}
-		else
-		{
-			std::cout << "[WARN] Unsupported method: " << request.method << std::endl;
-			response = generateErrorResponse(405, "Method Not Allowed");
-		}
-
-		// STEP 4f: Serialize response
-		std::cout << "[MAIN] Serializing response (status " << response.status_code << ")..." << std::endl;
-		std::string response_str = serializeResponse(response);
-
-		// STEP 4g: Send response to client
-		std::cout << "[MAIN] Sending response to client..." << std::endl;
-		int bytes_sent = sendData(client_socket, response_str);
-
-		if (bytes_sent > 0)
-		{
-			std::cout << "[SUCCESS] Sent " << bytes_sent << " bytes to client" << std::endl;
-		}
-		else
-		{
-			std::cout << "[ERROR] Failed to send response" << std::endl;
-		}
-
-		// STEP 4h: Close connection
-		std::cout << "[MAIN] Closing client connection..." << std::endl;
-		closeSocket(client_socket);
-
-		std::cout << "[MAIN] Request handling complete" << std::endl;
-		std::cout << std::endl;  // Blank line for readability
 	}
 
 	// STEP 5: Shutdown - Close listening socket
-	std::cout << "[MAIN] Closing listening socket..." << std::endl;
+	std::cout << "\n[MAIN] Closing listening socket..." << std::endl;
 	closeSocket(server.listening_socket);
 
 	// STEP 6: Cleanup Winsock
@@ -140,5 +183,6 @@ int main(int argc, char* argv[])
 	WSACleanup();
 
 	std::cout << "[SUCCESS] Server shut down gracefully" << std::endl;
+	std::cout << "[INFO] Handled " << client_count << " client connections" << std::endl;
 	return 0;
 }
