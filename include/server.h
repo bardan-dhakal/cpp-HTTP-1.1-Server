@@ -10,3 +10,4 @@ struct SocketServer {
 SocketServer createServerSocket( int Port); /*port is supposed to be obtained from the cmd line*/
 void bindSocket(const SocketServer& mySocket); /* bind created socket to desired port number*/
 void listenSocket(const SocketServer& mySocket); /*Listen on the created socket*/
+SOCKET acceptConnection(const SocketServer& mySocket); /* accepts incoming connections and provides new socket for communication*/

@@ -73,4 +73,22 @@ void listenSocket(const SocketServer& mySocket)
 	return;
 
 }
+
+SOCKET acceptConnection(const SocketServer& mySocket)
+{
+	sockaddr_in client_addr;
+	int addr_size = sizeof(sockaddr_in);
+
+	SOCKET client_socket = accept(mySocket.listening_socket, (sockaddr*)&client_addr, &addr_size);
+
+	if (client_socket == INVALID_SOCKET)
+	{
+		int lasterror = WSAGetLastError();
+		std::cout << "Accept failed with error: " << lasterror << std::endl;
+		return INVALID_SOCKET;
+	}
+
+	std::cout << "Client connected, socket: " << client_socket << std::endl;
+	return client_socket;
+}
  
