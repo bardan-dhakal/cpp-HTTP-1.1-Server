@@ -28,7 +28,16 @@ SocketServer createServerSocket(int Port) {
 
 	mySocket.listening_socket = listening_socket;
 	mySocket.port = Port;
-	
+
+	int opt_value = 1;
+	if (setsockopt(listening_socket, SOL_SOCKET, SO_REUSEADDR, (const char*)&opt_value, sizeof(opt_value)) == -1)
+	{
+		int lasterror = WSAGetLastError();
+		std::cout << "Socket option not initialized " << lasterror << std::endl;
+	}
+
+	std::cout << "SO_REUSEADDR set successfully" << std::endl;
+
 	return mySocket;
 }
  
