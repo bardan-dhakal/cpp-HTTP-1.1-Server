@@ -58,4 +58,19 @@ void bindSocket(const SocketServer& mySocket)
 
 	return;
 }
+
+void listenSocket(const SocketServer& mySocket)
+{
+	if (listen(mySocket.listening_socket, 5) == SOCKET_ERROR)
+	{
+		int lasterror = WSAGetLastError();
+		std::cout << "Can not listen on socket " << lasterror << std::endl;
+		return;
+	}
+
+	std::cout << "Listening on socket ..." << std::endl;
+
+	return;
+
+}
  
