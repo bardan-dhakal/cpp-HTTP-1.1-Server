@@ -11,3 +11,4 @@ SocketServer createServerSocket( int Port); /*port is supposed to be obtained fr
 void bindSocket(const SocketServer& mySocket); /* bind created socket to desired port number*/
 void listenSocket(const SocketServer& mySocket); /*Listen on the created socket*/
 SOCKET acceptConnection(const SocketServer& mySocket); /* accepts incoming connections and provides new socket for communication*/
+int sendData(SOCKET client_socket, const std::string& data);

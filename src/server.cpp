@@ -91,4 +91,31 @@ SOCKET acceptConnection(const SocketServer& mySocket)
 	std::cout << "Client connected, socket: " << client_socket << std::endl;
 	return client_socket;
 }
- 
+
+int sendData(SOCKET client_socket, const std::string& data)
+{
+	int total_bytes_sent = 0;
+	int remaining_bytes;
+	const char* pointer_to_data = nullptr;
+	int result;
+
+	while (total_bytes_sent < data.length())
+	{
+		remaining_bytes = data.length() - total_bytes_sent;
+		pointer_to_data = data.c_str() + total_bytes_sent;
+
+		result = send(client_socket, pointer_to_data, remaining_bytes, 0);
+
+		if (result == SOCKET_ERROR)
+		{
+			int lasterror = WSAGetLastError();
+			std::cout << "Could not send data: " << lasterror << std::endl;
+			return -1;
+		}
+
+		total_bytes_sent += result;
+
+	}
+
+	return total_bytes_sent;
+}
