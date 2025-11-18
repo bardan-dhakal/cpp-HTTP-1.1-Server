@@ -160,3 +160,13 @@ std::string receiveData(SOCKET client_socket)
 	}
 
 }
+
+
+void closeSocket(SOCKET socket_fd)
+{
+	if (socket_fd != INVALID_SOCKET)
+	{
+		closesocket(socket_fd);
+		std::cout << "Socket closed" << std::endl;
+	}
+}
