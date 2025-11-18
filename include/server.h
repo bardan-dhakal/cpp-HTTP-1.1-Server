@@ -1,6 +1,6 @@
 #ifndef SERVER_H
 #define SERVER_H
-#endif
+
 
 #include <iostream>
 #include <string>
@@ -19,3 +19,5 @@ SOCKET acceptConnection(const SocketServer& mySocket); /* accepts incoming conne
 int sendData(SOCKET client_socket, const std::string& data); /* send data to socket*/
 std::string receiveData(SOCKET client_socket); /* receiving data from client*/
 void closeSocket(SOCKET socket_fd);
+
+#endif
