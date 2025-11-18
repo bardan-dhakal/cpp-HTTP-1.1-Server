@@ -1,4 +1,9 @@
+#ifndef SERVER_H
+#define SERVER_H
+#endif
+
 #include <iostream>
+#include <string>
 #include <winsock2.h>
 #pragma comment(lib, "ws2_32.lib")
 
