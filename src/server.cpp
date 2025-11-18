@@ -119,3 +119,44 @@ int sendData(SOCKET client_socket, const std::string& data)
 
 	return total_bytes_sent;
 }
+
+std::string receiveData(SOCKET client_socket)
+{
+	std::string accumulated_data = ""; //stores all received data
+	char buffer[4096]; //buffer to store on every read
+	int bytes_received = 0; //bytes received from recv() func
+
+	while (true)
+	{
+		bytes_received = recv(client_socket, buffer, 4096, 0);
+
+		if (bytes_received == SOCKET_ERROR)
+		{
+			int lasterror = WSAGetLastError();
+			std::cout << "Receive failed with error: " << lasterror << std::endl;
+			return accumulated_data;  // Return what we got so far
+		}
+
+		if (bytes_received == 0)
+		{
+			std::cout << "Client disconnected" << std::endl;
+			return accumulated_data;
+		}
+
+		accumulated_data.append(buffer, bytes_received);
+
+		if (accumulated_data.find("\r\n\r\n") != std::string::npos)
+		{
+			std::cout << "Complete request received" << std::endl;
+			return accumulated_data;
+		}
+
+		if (accumulated_data.length() > 100000) //100KB limit
+		{
+			std::cout << "Request is too large" << std::endl;
+			return accumulated_data;
+		}
+
+	}
+
+}
