@@ -8,3 +8,4 @@ struct SocketServer {
 };
 
 SocketServer createServerSocket( int Port); /*port is supposed to be obtained from the cmd line*/
+void bindSocket(const SocketServer& mySocket);

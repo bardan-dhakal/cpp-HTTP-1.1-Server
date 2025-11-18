@@ -40,4 +40,22 @@ SocketServer createServerSocket(int Port) {
 
 	return mySocket;
 }
+
+void bindSocket(const SocketServer& mySocket)
+{
+	sockaddr_in addr_info;
+
+	addr_info.sin_family = AF_INET;
+	addr_info.sin_port = htons(mySocket.port);
+	addr_info.sin_addr.s_addr = INADDR_ANY;
+
+	if (bind(mySocket.listening_socket, (const sockaddr*)&addr_info, sizeof(addr_info)) == SOCKET_ERROR)
+	{
+		int lasterror = WSAGetLastError();
+		std::cout << "Socket binding could not be complete " << lasterror << std::endl;
+		return; 
+	}
+
+	return;
+}
  
